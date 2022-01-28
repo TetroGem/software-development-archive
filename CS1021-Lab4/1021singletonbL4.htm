@@ -1,0 +1,627 @@
+<meta charset="utf-8" lang="en">            <style class="fallback">body{visibility:hidden;}</style>
+<!---
+
+
+                       DOWNLOAD AND OPEN IN A BROWSER
+                          TO SEE PROPER FORMATTING
+
+
+--->
+**Lab 4: Inheritance with Shapes**
+    Username: singletonb
+    Date: 1-10-2022
+    Course: CS1021
+    Submitted to: Dr. Chris Taylor
+
+!!! METRIcS: Instructor Feedback
+    | Earned | Possible | Criteria                                         |
+    | ------ | -------- | ------------------------------------------------ |
+    |   85   |    85    | Technical quality (see point deductions in code) |
+    |   10   |    10    | Coding standard compliance and program clarity   |
+    |    5   |     5    | Following submission instructions                |
+
+    [Nicely Done](https://msoe.us/taylor/Nice)
+
+# Circle.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 4 - Inheritance with Shapes
+ * Name: Benjamin Singleton
+ * Created: 01/05/2022
+ * Modified: 01/10/2022
+ */
+package singletonb;
+
+import edu.msoe.winplotterfx.WinPlotterFX;
+import javafx.scene.paint.Color;
+
+/**
+ * This class describes a Circle object that extends the abstract Shape object
+ * @author singletonb
+ * @version 1.0
+ */
+public class Circle extends Shape {
+    private final double radius;
+    private final double heightRadius;
+
+    /**
+     * Constructor for the Circle class
+     * @param x x location of the center of the circle
+     * @param y y location of the center of the circle
+     * @param radius length of the radius of the circle
+     * @param color the color of the circle
+     */
+    public Circle(double x, double y, double radius, Color color) {
+        super(x - radius, y - radius, color);
+        this.radius = radius;
+        this.heightRadius = radius;
+    }
+
+    /**
+     * Constructor for the Circle class
+     * @param x The lower left corner x-value of the circle
+     * @param y the lower left corner y-value of the circle
+     * @param width the width of the circle
+     * @param height the height of the circle
+     * @param color the color of the circle
+     */
+    public Circle(double x, double y, double width, double height, Color color) {
+        super(x, y, color);
+        this.radius = width / 2;
+        this.heightRadius = height / 2;
+    }
+
+    /**
+     * A method that draws the circle using the WinPlotterFX
+     * @param plotter an instance of a WinPlotterFX object
+     */
+    @Override
+    public void draw(WinPlotterFX plotter) {
+        setPenColor(plotter);
+        final int degreesInCircle = 360;
+        final int degreeStep = 1;
+        for(int i = 0; i &lt&#xFEFF; degreesInCircle; i += degreeStep) {
+            double angle = i * (Math.PI / ((double)degreesInCircle / 2));
+            double nextAngle = (i + degreeStep) * (Math.PI / ((double)degreesInCircle / 2));
+            line(plotter,
+                    Math.cos(angle) * radius + x + radius,
+                    Math.sin(angle) * heightRadius + y + heightRadius,
+                    Math.cos(nextAngle) * radius + x + radius,
+                    Math.sin(nextAngle) * heightRadius + y + heightRadius);
+        }
+    }
+}
+~~~~
+
+# FaceMaker.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 4 - Inheritance with Shapes
+ * Name: Benjamin Singleton
+ * Created: 01/05/2022
+ * Modified: 01/10/2022
+ */
+package singletonb;
+
+import edu.msoe.winplotterfx.WinPlotterFX;
+import javafx.application.Application;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+
+import java.util.Scanner;
+
+/**
+ * This class draws a face out of a bunch of rectangles.
+ * @author taylor
+ * @version 20191216
+ */
+public class FaceMaker extends Application {
+    /**
+     * The dimensions of the window created
+     */
+    public static final int WINDOW_SIZE = 600;
+
+    /**
+     * The number of pixels between each gridline
+     */
+    public static final int GRID_INCREMENT = WINDOW_SIZE / 10;
+
+    /**
+     * The size of the head to be drawn
+     */
+    public static final int HEAD_SIZE = 400;
+
+    private static final Scanner IN = new Scanner(System.in);
+    private static int headType;
+    private static int leftEyeType;
+    private static int rightEyeType;
+    private static int noseType;
+    private static int mouthType;
+
+    /**
+     * Launches the JavaFX application
+     * @param args ignored
+     */
+    public static void main(String[] args) {
+        promptForShapeTypes();
+        launch(args);
+    }
+
+    /**
+     * Use the Shape class and its descendants to draw a face.
+     * @param stage Default stage given to a JavaFX program. Unused.
+     */
+    @Override
+    public void start(Stage stage) {
+        WinPlotterFX plotter = new WinPlotterFX();
+        plotter.setWindowTitle("Face Maker");
+        plotter.setWindowSize(WINDOW_SIZE, WINDOW_SIZE);
+        plotter.setBackgroundColor(Color.BLACK.getRed(), Color.BLACK.getGreen(),
+                Color.BLACK.getBlue());
+        final boolean showGrid = true;
+        plotter.setGrid(showGrid, GRID_INCREMENT, GRID_INCREMENT, Color.GRAY);
+        Shape head = createHead();
+        Shape leftEye = createLeftEye();
+        Shape rightEye = createRightEye();
+        Shape nose = createNose();
+        Shape mouth = createMouth();
+
+        head.draw(plotter);
+        leftEye.draw(plotter);
+        rightEye.draw(plotter);
+        nose.draw(plotter);
+        mouth.draw(plotter);
+
+        plotter.showPlotter();
+    }
+
+    /**
+     * Creates and returns a shape representing the head
+     * @return shape representing the head
+     */
+    private Shape createHead() {
+        final int xLeft = (WINDOW_SIZE - HEAD_SIZE) / 2;
+        final int yBottom = (WINDOW_SIZE - HEAD_SIZE) / 2;
+        return createShape(headType, xLeft, yBottom, HEAD_SIZE, HEAD_SIZE, Color.WHITE, "head");
+    }
+
+    /**
+     * Creates and returns a shape representing the right eye
+     * @return shape representing the right eye
+     */
+    private Shape createRightEye() {
+        final double scaleFactor = 0.15;
+        final double size = scaleFactor * HEAD_SIZE;
+        final double yBottom = (double)WINDOW_SIZE / 2 + ((size * 3) / 2);
+        final double xLeft = (double)WINDOW_SIZE / 2 + size;
+        return createShape(rightEyeType, xLeft, yBottom,
+                size, size, Color.WHITE, "right eye");
+    }
+
+    /**
+     * Creates and returns a shape representing the left eye
+     * @return shape representing the left eye
+     */
+    private Shape createLeftEye() {
+        final double scaleFactor = 0.15;
+        final double size = scaleFactor * HEAD_SIZE;
+        final double yBottom = (double)WINDOW_SIZE / 2 + size * 3 / 2;
+        final double xLeft = (double)WINDOW_SIZE / 2 - size * 2;
+        return createShape(leftEyeType, xLeft, yBottom,
+                size, size, Color.WHITE, "left eye");
+    }
+
+    /**
+     * Creates and returns a shape representing the nose
+     * @return shape representing the nose
+     */
+    private Shape createNose() {
+        final double scaleFactor = 0.2;
+        final double size = scaleFactor * HEAD_SIZE;
+        final double xLeft = (double)WINDOW_SIZE / 2 - size / 2;
+        final double yBottom = (double)WINDOW_SIZE / 2;
+        return createShape(noseType, xLeft, yBottom,
+                size, size, Color.WHITE, "nose");
+    }
+
+    /**
+     * Creates and returns a shape representing the mouth
+     * @return shape representing the mouth
+     */
+    private Shape createMouth() {
+        final double scaleFactor = 0.3;
+        final double size = scaleFactor * HEAD_SIZE;
+        final double xLeft = (int)(WINDOW_SIZE / 2) - size / 2;
+        final double yBottom = (int)(WINDOW_SIZE / 2) - size * 3 / 2;
+        return createShape(mouthType, xLeft, yBottom,
+                size, size, Color.WHITE, "mouth");
+    }
+
+    private Shape createShape(int type, double x, double y,
+                              double width, double height, Color color, String name) {
+        final int circle = 2;
+        final int triangle = 3;
+        final int labeledRect = 4;
+        final int labeledTriangle = 5;
+        final int random = 6;
+        if(type == random) {
+            type = (int)(Math.random() * (random - 1) + 1);
+        }
+
+        Shape shape;
+        switch(type) {
+            default -> {
+                shape = new Rectangle(x, y, width, height, color);
+            }
+            case circle -> {
+                shape = new Circle(x, y, width, height, color);
+            }
+            case triangle -> {
+                shape = new Triangle(x, y, width, height, color);
+            }
+            case labeledRect -> {
+                shape = new LabeledRectangle(x, y, width, height, color, name);
+            }
+            case labeledTriangle -> {
+                shape = new LabeledTriangle(x, y, width, height, color, name);
+            }
+        }
+
+        return shape;
+    }
+
+    private static void promptForShapeTypes() {
+        int sameTypes = -1;
+        do {
+            System.out.println("Would you like to use the same shape " +
+                    "for each feature or different ones? [1] Same, [2] Different");
+            String input = IN.nextLine();
+            switch(input) {
+                case "1" -> {
+                    sameTypes = 1;
+                }
+                case "2" -> {
+                    sameTypes = 0;
+                }
+            }
+        } while(sameTypes == -1);
+
+        final String shapeOptions = "[1] Rectangle, [2] Circle, [3] Triangle, " +
+                "[4] Labeled Rectangle, [5] Labeled Triangle, [6] Random";
+        if(sameTypes == 1) {
+            System.out.println("Which shape? " + shapeOptions);
+            final int type = inputType();
+            headType = type;
+            leftEyeType = type;
+            rightEyeType = type;
+            noseType = type;
+            mouthType = type;
+        } else {
+            System.out.println("Which head shape? " + shapeOptions);
+            headType = inputType();
+            System.out.println("Which left eye shape? " + shapeOptions);
+            leftEyeType = inputType();
+            System.out.println("Which right eye shape? " + shapeOptions);
+            rightEyeType = inputType();
+            System.out.println("Which nose shape? " + shapeOptions);
+            noseType = inputType();
+            System.out.println("Which mouth shape? " + shapeOptions);
+            mouthType = inputType();
+        }
+    }
+
+    private static int inputType(){
+        final int random = 6;
+        int type = random;
+        if(IN.hasNextInt()) {
+            int input = IN.nextInt();
+            if(input > 0 && input &lt&#xFEFF; random + 1) {
+                type = input;
+            }
+        }
+        IN.nextLine();
+        return type;
+    }
+}
+
+~~~~
+
+# LabeledRectangle.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 4 - Inheritance with Shapes
+ * Name: Benjamin Singleton
+ * Created: 01/05/2022
+ * Modified: 01/10/2022
+ */
+package singletonb;
+
+import edu.msoe.winplotterfx.WinPlotterFX;
+import javafx.scene.paint.Color;
+
+/**
+ * This class describes a LabeledRectangle object with a text label in the lower left corner.
+ * The class extends the Rectangle object
+ * @author singletonb
+ * @version 1.0
+ */
+public class LabeledRectangle extends Rectangle {
+    private final String name;
+
+    /**
+     * Constructor for the Labeled Rectangle object
+     * @param x The lower left corner x-value of the rectangle
+     * @param y the lower left corner y-value of the rectangle
+     * @param width the width of the rectangle
+     * @param height the height of the rectangle
+     * @param color the color of the rectangle
+     * @param name the text assigned to the label
+     */
+    public LabeledRectangle(double x, double y, double width,
+                            double height, Color color, String name) {
+        super(x, y, width, height, color);
+        this.name = name;
+    }
+
+    /**
+     * A method that draws the Labeled Rectangle using the WinPlotterFX
+     * @param plotter an instance of a WinPlotterFX object
+     */
+    @Override
+    public void draw(WinPlotterFX plotter) {
+        super.draw(plotter);
+        plotter.printAt(x, y, name);
+    }
+}
+
+~~~~
+
+# LabeledTriangle.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 4 - Inheritance with Shapes
+ * Name: Benjamin Singleton
+ * Created: 01/05/2022
+ * Modified: 01/10/2022
+ */
+package singletonb;
+
+import edu.msoe.winplotterfx.WinPlotterFX;
+import javafx.scene.paint.Color;
+
+/**
+ * This class describes a LabeledTriangle object with a text label in the lower left corner.
+ * The class extends the Triangle object
+ * @author singletonb
+ * @version 1.0
+ */
+public class LabeledTriangle extends Triangle {
+    private final String name;
+
+    /**
+     * Constructor for the Labeled Triangle object
+     * @param x The lower left corner x-value of the Triangle
+     * @param y The lower left corner y-value of the Triangle
+     * @param base The length of the base of the Triangle
+     * @param height The height of the Triangle
+     * @param color The color of the Triangle
+     * @param name the text assigned to the label
+     */
+    public LabeledTriangle(double x, double y, double base,
+                           double height, Color color, String name) {
+        super(x, y, base, height, color);
+        this.name = name;
+    }
+
+    /**
+     * A method that draws the Labeled Triangle using the WinPlotterFX
+     * @param plotter an instance of a WinPlotterFX object
+     */
+    @Override
+    public void draw(WinPlotterFX plotter) {
+        super.draw(plotter);
+        plotter.printAt(x, y, name);
+    }
+}
+
+~~~~
+
+# Rectangle.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 4 - Inheritance with Shapes
+ * Name: Benjamin Singleton
+ * Created: 01/05/2022
+ * Modified: 01/10/2022
+ */
+package singletonb;
+
+import edu.msoe.winplotterfx.WinPlotterFX;
+import javafx.scene.paint.Color;
+
+/**
+ * This class describes a Rectangle object that extends the abstract Shape object
+ * @author singletonb
+ * @version 1.0
+ */
+public class Rectangle extends Shape {
+    protected final double height;
+    protected final double width;
+
+    /**
+     * Constructor for the Rectangle object
+     * @param x The lower left corner x-value of the rectangle
+     * @param y the lower left corner y-value of the rectangle
+     * @param width the width of the rectangle
+     * @param height the height of the rectangle
+     * @param color the color of the rectangle
+     */
+    public Rectangle(double x, double y, double width, double height, Color color) {
+        super(x, y, color);
+        this.width = width;
+        this.height = height;
+    }
+
+    /**
+     * A method that draws the Rectangle using the WinPlotterFX
+     * @param plotter an instance of a WinPlotterFX object
+     */
+    @Override
+    public void draw(WinPlotterFX plotter) {
+        setPenColor(plotter);
+        line(plotter, x, y, x + width, y);
+        line(plotter, x + width, y, x + width, y + height);
+        line(plotter, x + width, y + height, x, y + height);
+        line(plotter, x, y + height, x, y);
+    }
+}
+~~~~
+
+# Shape.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 4 - Inheritance with Shapes
+ * Name: Benjamin Singleton
+ * Created: 01/05/2022
+ * Modified: 01/10/2022
+ */
+package singletonb;
+
+import edu.msoe.winplotterfx.WinPlotterFX;
+import javafx.scene.paint.Color;
+
+/**
+ * An abstract class that describes a generic shape
+ * which includes it's color and location on a grid.
+ * @author singletonb
+ * @version 1.0
+ */
+public abstract class Shape {
+    private Color color;
+    protected final double x;
+    protected final double y;
+
+    /**
+     * Constructor for the Shape class
+     * @param x starting x-coordinate for the Shape
+     * @param y starting y-coordinate for the Shape
+     * @param color the color of the Shape
+     */
+    public Shape(double x, double y, Color color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+    }
+
+    /**
+     * An abstract method declaration for drawing the subclasses in a WinPlotterFX object
+     * @param plotter WinPlotterFX object that we are drawing the Shape in
+     */
+    public abstract void draw(WinPlotterFX plotter);
+
+    /**
+     * This method sets the Pen color for the WinPlotterFX object to match the color of the Shape
+     * @param plotter WinPlotter object that we are drawing the Shape in
+     */
+    public void setPenColor(WinPlotterFX plotter) {
+        plotter.setPenColor(color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    /**
+     * Setter method for the color of a Shape
+     * @param color the RGB Color of the Shape
+     */
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
+    /**
+     * Draws a line from one set of coordinates to another
+     * @param plotter WinPlotter object that we are drawing the line in
+     * @param x1 starting x-coordinate for the line
+     * @param y1 starting y-coordinate for the line
+     * @param x2 ending x-coordinate for the line
+     * @param y2 ending y-coordinate for the line
+     */
+    public void line(WinPlotterFX plotter, double x1, double y1, double x2, double y2) {
+        plotter.moveTo(x1, y1);
+        plotter.drawTo(x2, y2);
+    }
+}
+~~~~
+
+# Triangle.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 4 - Inheritance with Shapes
+ * Name: Benjamin Singleton
+ * Created: 01/05/2022
+ * Modified: 01/10/2022
+ */
+package singletonb;
+
+import edu.msoe.winplotterfx.WinPlotterFX;
+import javafx.scene.paint.Color;
+
+/**
+ * This class describes a Triangle object that extends the abstract Shape object
+ * @author singletonb
+ * @version 1.0
+ */
+public class Triangle extends Shape {
+    protected final double base;
+    protected final double height;
+
+    /**
+     * Constructor for the Triangle object
+     * @param x The lower left corner x-value of the Triangle
+     * @param y The lower left corner y-value of the Triangle
+     * @param base The length of the base of the Triangle
+     * @param height The height of the Triangle
+     * @param color The color of the Triangle
+     */
+    public Triangle(double x, double y, double base, double height, Color color) {
+        super(x, y, color);
+        this.base = base;
+        this.height = height;
+    }
+
+    /**
+     * A method that draws the Triangle using the WinPlotterFX
+     * @param plotter an instance of a WinPlotterFX object
+     */
+    @Override
+    public void draw(WinPlotterFX plotter) {
+        setPenColor(plotter);
+        line(plotter, x, y, x + base, y);
+        line(plotter, x + base, y, x + base / 2, y + height);
+        line(plotter, x + base / 2, y + height, x, y);
+    }
+}
+~~~~
+
+!!! BONUS: Good
+    Good work.
+
+<!-- Markdeep: --><script src="https://csse.msoe.us/markdeep.js?graded"></script>

@@ -1,0 +1,633 @@
+<meta charset="utf-8" lang="en">            <style class="fallback">body{visibility:hidden;}</style>
+<!---
+
+
+                       DOWNLOAD AND OPEN IN A BROWSER
+                          TO SEE PROPER FORMATTING
+
+
+--->
+**Lab 3: Interfaces**
+    Username: singletonb
+    Date: 01-03-2022
+    Course: CS1021
+    Submitted to: Dr. Chris Taylor
+
+!!! METRIcS: Instructor Feedback
+    | Earned | Possible | Criteria                                         |
+    | ------ | -------- | ------------------------------------------------ |
+    |   85   |    85    | Technical quality (see point deductions in code) |
+    |   10   |    10    | Coding standard compliance and program clarity   |
+    |    5   |     5    | Following submission instructions                |
+
+    [Nicely Done](https://msoe.us/taylor/Nice)
+
+# Article.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 3 - Keeping our Sources Straight
+ * Name: Benjamin Singleton
+ * Created: 12/30/2021
+ * Modified: 01/03/2022
+ */
+package singletonb;
+
+import java.io.PrintStream;
+import java.util.Scanner;
+
+/**
+ * Represents bibliographical information about an article published in a journal
+ * @author singletonb
+ * @version 1
+ */
+public class Article extends Reference {
+    /**
+     * The page number that the article ends on
+     */
+    private int endingPage;
+
+    /**
+     * The page number that the article starts on
+     */
+    private int startingPage;
+
+    /**
+     * The name of the journal the article was published in
+     */
+    private String journal;
+
+    /**
+     * Prompts the user for initial attribute values of the article object.
+     * @param out Output stream to prompt the user for input. Typically this will be System.out
+     * @param in Input stream to read user input.
+     */
+    @Override
+    public void promptToInitialize(PrintStream out, Scanner in) {
+        final String updating = this.updating ? " updated" : "";
+        out.printf("Enter the%s author of the reference%n", updating);
+        author = in.nextLine();
+        out.printf("Enter the%s title of the reference%n", updating);
+        title = in.nextLine();
+        publicationYear = receiveInt(in, out,
+                String.format("Enter the%s copyright year of the reference", updating));
+        out.printf("Enter the%s title of the journal%n", updating);
+        journal = in.nextLine();
+        if(!setStartingPage(receiveInt(in, out,
+                String.format("Enter the%s first page number of the article", updating)))) {
+            System.out.println("Starting page was not set, must not be a negative integer" +
+                    "or greater than the current ending page");
+        }
+        if(!setEndingPage(receiveInt(in, out,
+                String.format("Enter the%s last page number of the article", updating)))) {
+            System.out.println("Ending page was not set, must not be" +
+                    "less than the current starting page");
+        }
+    }
+
+    /**
+     * Prompts the user to update the attributes of the article object.
+     * @param out Output stream to prompt the user for input. Typically this will be System.out
+     * @param in Input stream to read user input.
+     */
+    @Override
+    public void promptForUpdate(PrintStream out, Scanner in) {
+        updating = true;
+        promptToInitialize(out, in);
+    }
+
+    /**
+     * The page number that the article starts on
+     * @return page number for last page
+     */
+    public int getEndingPage() {
+        return endingPage;
+    }
+
+    /**
+     * Gets first page of article
+     * @return page number for first page
+     */
+    public int getStartingPage() {
+        return startingPage;
+    }
+
+    /**
+     * Gets name of journal
+     * @return name of the journal article was published in
+     */
+    public String getJournal() {
+        return journal;
+    }
+
+    /**
+     * Returns a String of information in BibTeX format.
+     * @return String of BibTeX information
+     */
+    @Override
+    public String toString() {
+        return String.format("""
+                @ARTICLE { %s,
+                author = "%s",
+                title = "%s",
+                journal = "%s",
+                pages = "%s",
+                year = "%d"
+                }""", myUniqueID, author, title, journal,
+                startingPage + "-" + endingPage, publicationYear);
+    }
+
+    /**
+     * Sets the ending page of the article. If the desired ending
+     * page is less than the starting page, no change is made.
+     * @param endingPage Page number of the last page of the article
+     * @return returns true if the page was changed.
+     */
+    private boolean setEndingPage(int endingPage) {
+        boolean pageChanged = false;
+~~~~ Java highlight
+        if(endingPage >= startingPage){
+            this.endingPage = endingPage;
+            pageChanged = true;
+~~~~
+!!! MINUS: -1 Edge case for `setEndingPage()`
+    If the ending page passed in is the same as the current
+    ending page value, then no change was made, and this should
+    return `false`.
+
+~~~~ Java
+        }
+        return pageChanged;
+    }
+
+    /**
+     * Sets first page of the article. If the desired starting page is not
+     * positive or is greater than the current ending page, no change is made.
+     * @param startingPage Page number of the first page of the article.
+     * @return returns true if the page was changed.
+     */
+    private boolean setStartingPage(int startingPage) {
+        boolean pageChanged = false;
+        if((startingPage &lt&#xFEFF;= endingPage || endingPage == 0) && startingPage > 0){
+            this.startingPage = startingPage;
+            pageChanged = true;
+        }
+        return pageChanged;
+    }
+}
+~~~~
+
+# Book.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 3 - Keeping our Sources Straight
+ * Name: Benjamin Singleton
+ * Created: 12/30/2021
+ * Modified: 01/03/2022
+ */
+package singletonb;
+
+import java.io.PrintStream;
+import java.util.Scanner;
+
+/**
+ * Represents bibliographical information about a book
+ * @author singletonb
+ * @version 1
+ */
+public class Book extends Reference {
+
+    /**
+     * Name of the publisher of the book
+     */
+    private String publisher;
+
+    /**
+     * Prompts the user for initial attribute values of the book object.
+     * @param out Output stream to prompt the user for input. Typically this will be System.out
+     * @param in Input stream to read user input.
+     */
+    @Override
+    public void promptToInitialize(PrintStream out, Scanner in) {
+        final String updating = this.updating ? " updated" : "";
+        out.printf("Enter the%s author of the reference%n", updating);
+        author = in.nextLine();
+        out.printf("Enter the%s title of the reference%n", updating);
+        title = in.nextLine();
+        publicationYear = receiveInt(in, out,
+                String.format("Enter the%s copyright year of the reference", updating));
+        out.printf("Enter the%s publisher of the book%n", updating);
+        publisher = in.nextLine();
+    }
+
+    /**
+     * Prompts the user to update the attributes of the book object.
+     * @param out Output stream to prompt the user for input. Typically this will be System.out
+     * @param in Input stream to read user input.
+     */
+    @Override
+    public void promptForUpdate(PrintStream out, Scanner in) {
+        updating = true;
+        promptToInitialize(out, in);
+    }
+
+    /**
+     * Gets the name of the publisher of this book
+     * @return Name of the publisher
+     */
+    public String getPublisher() {
+        return publisher;
+    }
+
+    /**
+     * Returns a String of information in BibTeX format.
+     * @return String of BibTeX information
+     */
+    @Override
+    public String toString() {
+        return String.format("""
+                @BOOK { %s,
+                author = "%s",
+                title = "%s",
+                publisher = "%s",
+                year = "%d"
+                }""", myUniqueID, author, title, publisher, publicationYear);
+    }
+}
+
+~~~~
+
+# Lab3.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 3 - Keeping our Sources Straight
+ * Name: Benjamin Singleton
+ * Created: 12/30/2021
+ * Modified: 01/03/2022
+ */
+package singletonb;
+
+import java.util.Scanner;
+
+/**
+ * Driver for Lab 3 objects, prompts the user to create,
+ * update, export, or remove BibTeX references.
+ * @author singletonb
+ */
+public class Lab3 {
+    private static final Scanner IN = new Scanner(System.in);
+    private static boolean programRunning = true;
+    private static final ReferenceHolder REFERENCE_HOLDER = new ReferenceHolder();
+
+    public static void main(String[]args) {
+        while(programRunning) {
+            System.out.println("""
+                    Enter 0 to exit the program.
+                    Enter 1 to enter a new book into the reference set.
+                    Enter 2 to enter a new article into the reference set.
+                    Enter 3 to update a reference.
+                    Enter 4 to printout the entries in Bibtex format.
+                    Enter 5 to remove a reference.""");
+
+            String input = IN.nextLine();
+            switch(input) {
+                case "0" -> quitProgram();
+                case "1" -> addBook();
+                case "2" -> addArticle();
+                case "3" -> updateReference();
+                case "4" -> printEntries();
+                case "5" -> removeReference();
+            }
+        }
+
+        System.out.println("Goodbye");
+    }
+
+    private static void quitProgram() {
+        programRunning = false;
+    }
+
+    private static void addBook() {
+        final Book book = new Book();
+        book.promptToInitialize(System.out, IN);
+        REFERENCE_HOLDER.addReference(book);
+    }
+
+    private static void addArticle() {
+        final Article article = new Article();
+        article.promptToInitialize(System.out, IN);
+        REFERENCE_HOLDER.addReference(article);
+    }
+
+    private static void updateReference() {
+        System.out.println("Enter the ID of the reference you want to update");
+        String updateID = IN.nextLine();
+        if(!REFERENCE_HOLDER.updateReference(updateID, System.out, IN)) {
+            System.out.printf("Could not find reference with ID %s", updateID);
+        }
+
+    }
+
+    private static void printEntries() {
+        System.out.println(REFERENCE_HOLDER.toString());
+    }
+
+    private static void removeReference() {
+        System.out.println("Enter the ID of the reference you want to remove");
+        String removeID = IN.nextLine();
+        if(REFERENCE_HOLDER.removeReference(removeID)) {
+            System.out.printf("Removed reference with ID %s", removeID);
+        } else {
+            System.out.printf("Could not find reference with ID %s", removeID);
+        }
+    }
+}
+
+~~~~
+
+# Reference.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 3 - Keeping our Sources Straight
+ * Name: Benjamin Singleton
+ * Created: 12/30/2021
+ * Modified: 01/03/2022
+ */
+package singletonb;
+
+import java.io.PrintStream;
+import java.util.Scanner;
+
+/**
+ * Represents bibliographical information about a reference
+ * @author singletonb
+ * @version 1
+ */
+public abstract class Reference {
+    /**
+     * Keeps track of how many instances of this type have been created.
+     */
+    private static int instanceCount = 0;
+
+    /**
+     * The person who wrote the reference
+     */
+    protected String author;
+
+    /**
+     * The unique ID assigned to this instance of the reference
+     */
+    protected final String myUniqueID;
+
+    /**
+     * Year of publication
+     */
+    protected int publicationYear;
+
+    /**
+     * The title for the reference
+     */
+    protected String title;
+    protected boolean updating;
+
+    /**
+     * Assigns a unique ID
+     */
+    public Reference() {
+        myUniqueID = "REF" + instanceCount;
+        instanceCount++;
+    }
+
+    /**
+     * Prompts the user for initial attribute values of the reference object.
+     * @param out Output stream to prompt the user for input. Typically this will be System.out
+     * @param in Input stream to read user input.
+     */
+    public abstract void promptToInitialize(PrintStream out, Scanner in);
+
+    /**
+     * Prompts the user to update the attributes of the reference object.
+     * @param out Output stream to prompt the user for input. Typically this will be System.out
+     * @param in Input stream to read user input.
+     */
+~~~~ Java highlight
+    public void promptForUpdate(PrintStream out, Scanner in) {
+~~~~
+!!! minus: -1 This method should do stuff
+    This method should manage the update for the author, title,
+    and copyright date (which all references have).
+
+~~~~ Java
+
+    }
+
+    /**
+     * Get the author
+     * @return author of this reference
+     */
+    public String getAuthor() {
+        return author;
+    }
+
+    /**
+     * Get the unique ID associated with this reference
+     * @return the unique ID
+     */
+    public String getMyUniqueID() {
+        return myUniqueID;
+    }
+
+    /**
+     * Get publication year
+     * @return publication year of this reference
+     */
+    public int getPublicationYear() {
+        return publicationYear;
+    }
+
+    /**
+     * Get title
+     * @return title of this reference
+     */
+    public String getTitle() {
+        return title;
+    }
+    
+    private boolean intParsable(String str) {
+        boolean isInteger = true;
+        
+        try {
+            Integer.parseInt(str);
+        } catch(NumberFormatException e) {
+            isInteger = false;
+        }
+        
+        return isInteger;
+    }
+
+    protected int receiveInt(Scanner in, PrintStream out, String prompt) {
+        String input;
+        do {
+            out.println(prompt);
+            input = in.nextLine();
+        } while(!intParsable(input));
+        return Integer.parseInt(input);
+    }
+}
+~~~~
+
+# ReferenceHolder.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 3 - Keeping our Sources Straight
+ * Name: Benjamin Singleton
+ * Created: 12/30/2021
+ * Modified: 01/03/2022
+ */
+package singletonb;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * Represents a collection of BibTeX references.
+ * Objects from this class can be used to keep track of all references associated with a paper.
+ * Once created, references to books and articles can be added to the object.
+ * In addition, the class provides a mechanism for updating and removing
+ * references that have already been added to the object.
+ * @author singletonb
+ * @version 1
+ */
+public class ReferenceHolder {
+
+    /**
+     * List to store the references
+     */
+    private final List&lt&#xFEFF;Reference> references;
+
+    /**
+     * Constructor for ReferenceHolder object
+     */
+    public ReferenceHolder() {
+        references = new ArrayList&lt&#xFEFF;>();
+    }
+
+    /**
+     * Add a book reference to the bibliography
+     * @param book the book reference to be added
+     */
+    public void addReference(Book book) {
+        references.add(book);
+    }
+
+    /**
+     * Add an article reference to the bibliography
+     * @param article the article reference to be added
+     */
+    public void addReference(Article article) {
+        references.add(article);
+    }
+
+    /**
+     * Removes the reference with the specified ID.
+     * @param uniqueID the id for the reference to be updated
+     * @return returns true if and only if the desired reference was removed
+     */
+    public boolean removeReference(String uniqueID) {
+        boolean removed = false;
+        for(int i = 0; i &lt&#xFEFF; references.size() && !removed; i++) {
+            if(references.get(i).getMyUniqueID().equals(uniqueID)) {
+                references.remove(i);
+                removed = true;
+            }
+        }
+        return removed;
+    }
+
+    /**
+     * Asks the reference corresponding to the uniqueID to update itself.
+     * If no reference with uniqueID is found, no update is performed and the method returns false.
+     * @param uniqueID the id for the reference to be updated
+     * @param out Output stream to prompt the user for input
+     * @param in Input stream to read user input
+     * @return returns true if and only if the desired reference was updated
+     */
+    public boolean updateReference(String uniqueID, PrintStream out, Scanner in) {
+        boolean updated = false;
+        for(int i = 0; i &lt&#xFEFF; references.size() && !updated; i++) {
+            if(references.get(i).getMyUniqueID().equals(uniqueID)) {
+                references.get(i).promptForUpdate(out, in);
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    /**
+     * Return a string containing all BibTeX entries in the reference list
+     * @return a string containing all BibTeX entries
+     */
+    @Override
+    public String toString() {
+        StringBuilder referenceList = new StringBuilder();
+        for(Reference reference : references) {
+            referenceList.append(reference);
+            if(references.indexOf(reference) != references.size() - 1) {
+                referenceList.append("\n");
+~~~~ Java highlight
+            }
+~~~~
+!!! MINUS: Alternative approach
+    Alternatively, you could just remove the last character when you are done
+    looping. That way you wouldn't need to have this `if` statement.
+
+~~~~ Java
+        }
+~~~~ Java highlight
+        return referenceList.toString();
+~~~~
+!!! FEEDBACK: Bonus material... feel free to ignore
+    We won't cover this until later in the quarter, but starting in version
+    8 of Java, there is an alternative to the for-each loop that you may
+    find interesting.  You could replace the loop with a call to the
+    `forEach()` method that is part of the `List` interface.
+    ```
+    StringBuilder builder = new StringBuilder();
+    references.forEach(ref -> builder.append(ref));
+    return builder.toString();
+    ```
+
+    This makes use of the `forEach()` method and something
+    called a lambda expression.  The lambda expression is a self-contained
+    method that is passed to the `forEach()` method.  The
+    lambda expression is applied to each element (`ref`) in
+    the `ArrayList` of `references`.
+
+    In this particular example, the `forEach()` call says
+    go through every element in `references` and append the string
+    representation of the reference to the string builder object.
+
+~~~~ Java
+    }
+
+}
+~~~~
+
+
+<!-- Markdeep: --><script src="https://csse.msoe.us/markdeep.js?graded"></script>

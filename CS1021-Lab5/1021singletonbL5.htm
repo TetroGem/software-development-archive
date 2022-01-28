@@ -1,0 +1,586 @@
+<meta charset="utf-8" lang="en">            <style class="fallback">body{visibility:hidden;}</style>
+<!---
+
+
+                       DOWNLOAD AND OPEN IN A BROWSER
+                          TO SEE PROPER FORMATTING
+
+
+--->
+**Lab 5: Game of Life**
+    Username: singletonb
+    Date: 01-17-2022
+    Course: CS1021-021
+    Submitted to: Dr. Chris Taylor
+
+!!! METRIcS: Instructor Feedback
+    | Earned | Possible | Criteria                                         |
+    | ------ | -------- | ------------------------------------------------ |
+    |   85   |    85    | Technical quality (see point deductions in code) |
+    |   10   |    10    | Coding standard compliance and program clarity   |
+    |    5   |     5    | Following submission instructions                |
+
+    [Nicely Done](https://msoe.us/taylor/Nice)
+
+# Cell.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 5 - Game Of Life
+ * Name: Derek Riley (edits by Chris Taylor & Benjamin Singleton)
+ * Created: 11/25/2016
+ * Modified: 1/17/2022
+ */
+
+package singletonb;
+
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+
+/**
+ * This Class represents a cell within John Conway's Game of Life.
+ * The cell is arranged in a 2D grid and has 8 neighbors (other Cells).
+ * It contains a Rectangle that is used to visually represent the cell in the JavaFX framework.
+ */
+public class Cell extends Rectangle {
+
+    /**
+     * This constant represents the scale (size) of the grid in number of pixels
+     */
+    public static final int SCALE = 10;
+
+    /**
+     * This constant represents the color the alive cells are painted
+     */
+    public static final Color ALIVE_COLOR = Color.GREEN;
+
+    /**
+     * This constant represents the color the dead cells are painted
+     */
+    public static final Color DEAD_COLOR = Color.BLACK;
+
+    /**
+     * This variable represents whether the cell is currently alive
+     */
+    private boolean alive;
+
+    /**
+     * This variable represents whether the cell will be alive in the next time tick
+     */
+    private boolean willBeAlive;
+
+    /**
+     * These variables represent the 8 neighbors of the cell
+     */
+    private final Cell[][] neighbors = new Cell[3][3];
+    private static final int ABOVE = 0;
+    private static final int MIDDLE = 1;
+    private static final int BELOW = 2;
+    private static final int LEFT = 0;
+    private static final int CENTER = 1;
+    private static final int RIGHT = 2;
+
+    /**
+     * This method returns whether the cell is currently alive or not
+     * @return true if the cell is currently alive or false if not
+     */
+    public boolean isAlive() {
+        return alive;
+    }
+
+    /**
+     * This method sets the cell to be currently alive or not
+     * @param alive true if the cell is alive or false if not
+     */
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
+
+    /**
+     * This method sets the neighbor centered above the current cell
+     * @param neighborAboveCenter northern neighbor
+     */
+    public void setNeighborAboveCenter(Cell neighborAboveCenter) {
+        neighbors[ABOVE][CENTER] = neighborAboveCenter;
+    }
+
+    /**
+     * This method sets the neighbor above and to the right of the current cell
+     * @param neighborAboveRight northeastern neighbor
+     */
+    public void setNeighborAboveRight(Cell neighborAboveRight) {
+        neighbors[ABOVE][RIGHT] = neighborAboveRight;
+    }
+
+    /**
+     * This method sets the neighbor above and to the left of the current cell
+     * @param neighborAboveLeft northwestern neighbor
+     */
+    public void setNeighborAboveLeft(Cell neighborAboveLeft) {
+        neighbors[ABOVE][LEFT] = neighborAboveLeft;
+    }
+
+    /**
+     * This method sets the neighbor at the same vertical level but to the right of the current cell
+     * @param neighborMiddleRight eastern neighbor
+     */
+    public void setNeighborMiddleRight(Cell neighborMiddleRight) {
+        neighbors[MIDDLE][RIGHT] = neighborMiddleRight;
+    }
+
+    /**
+     * This method sets the neighbor at the same vertical level but to the left of the current cell
+     * @param neighborMiddleLeft western neighbor
+     */
+    public void setNeighborMiddleLeft(Cell neighborMiddleLeft) {
+        neighbors[MIDDLE][LEFT] = neighborMiddleLeft;
+    }
+
+    /**
+     * This method sets the neighbor below and centered of the current cell
+     * @param neighborBelowCenter southern neighbor
+     */
+    public void setNeighborBelowCenter(Cell neighborBelowCenter) {
+        neighbors[BELOW][CENTER] = neighborBelowCenter;
+    }
+
+    /**
+     * This method sets the neighbor below and to the right of the current cell
+     * @param neighborBelowRight southeastern neighbor
+     */
+    public void setNeighborBelowRight(Cell neighborBelowRight) {
+        neighbors[BELOW][RIGHT] = neighborBelowRight;
+    }
+
+    /**
+     * This method sets the neighbor below and to the left of the current cell
+     * @param neighborBelowLeft southwestern neighbor
+     */
+    public void setNeighborBelowLeft(Cell neighborBelowLeft) {
+        neighbors[BELOW][LEFT] = neighborBelowLeft;
+    }
+
+    /**
+     * This constructor creates the cell at the given position within the grid
+     * @param xPosition the x-Position within the grid
+     * @param yPosition the y-Position within the grid
+     */
+    public Cell(double xPosition, double yPosition) {
+        this.setLayoutX(xPosition*SCALE);
+        this.setLayoutY(yPosition*SCALE);
+        this.setWidth(SCALE);
+        this.setHeight(SCALE);
+        this.alive = false;
+        this.willBeAlive = false;
+        updateColors();
+    }
+
+    /**
+     * This method calculates whether the cell will be alive during the next tick.
+     */
+    public void determineNextTick(){
+        int neighborsAlive = 0;
+        for(Cell[] row : neighbors) {
+            for(Cell neighbor : row) {
+                if(neighbor!=null && neighbor.isAlive()) {
+                    ++neighborsAlive;
+                }
+            }
+        }
+        runLifeRules(neighborsAlive);
+    }
+
+    /**
+     * This method updates the cell's life status based on the predicted life status in willBeAlive.
+     * The cell's Rectangle color is also updated.
+     */
+    public void updateTick(){
+        alive = willBeAlive;
+        updateColors();
+    }
+
+    /**
+     * This method updates the color of the cell based on the ALIVE_COLOR or DEAD_COLOR
+     */
+    public void updateColors(){
+        if(alive){
+            this.setFill(ALIVE_COLOR);
+        } else{
+            this.setFill(DEAD_COLOR);
+        }
+    }
+
+    /**
+     * This method defines the life rules based on the number of neighbors alive
+     * @param neighborsAlive this is the number of neighbors that are alive for the current cell
+     */
+    private void runLifeRules(int neighborsAlive){
+        if(neighborsAlive==3) {
+            willBeAlive = true;
+        } else if(neighborsAlive&lt&#xFEFF;2 || neighborsAlive>3){
+            willBeAlive = false;
+        } else{
+            willBeAlive = alive;
+        }
+    }
+}
+
+~~~~
+
+# Lab5.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 5 - Game Of Life
+ * Name: Benjamin Singleton
+ * Created: 01/12/2022
+ * Modified: 01/17/2022
+ */
+package singletonb;
+
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+import java.util.List;
+
+/**
+ * Driver class for the Application and Game of Life methods
+ * @author singletonb
+ */
+public class Lab5 extends Application {
+    private static final int WINDOW_SIZE = 600;
+    private static LifeGrid lifeGrid;
+    private static Label stats;
+    private static LineChart&lt&#xFEFF;Number, Number> lineChart;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    @Override
+    public void start(Stage stage) {
+        stage.setTitle("Game of Life");
+
+        GridPane gridPane = new GridPane();
+        final int gridSize = 500;
+        lifeGrid = new LifeGrid(gridPane, gridSize, gridSize);
+
+        createChart();
+
+        Button stepButton = new Button("Next Step");
+        stepButton.setOnAction(this::step);
+        Button randomizeButton = new Button("Randomize");
+        randomizeButton.setOnAction(this::randomizeGrid);
+        Button clearButton = new Button("Clear");
+        clearButton.setOnAction(this::clearGrid);
+        stats = new Label();
+        updateStats();
+
+        final int buffer = 5;
+        HBox buttonRow = new HBox(buffer);
+        buttonRow.setAlignment(Pos.CENTER_LEFT);
+        buttonRow.getChildren().addAll(stepButton, randomizeButton, clearButton, stats);
+
+        HBox mainDisplays = new HBox(buffer);
+        mainDisplays.getChildren().addAll(gridPane, lineChart);
+
+        Pane rows = new VBox();
+        rows.getChildren().addAll(mainDisplays, buttonRow);
+
+        Scene scene = new Scene(rows);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    /**
+     * Updates stats about the game, such as the cell populations and chart data
+     */
+    public static void updateStats() {
+        if(lifeGrid != null) {
+            stats.setText(String.format("Alive Cells: %d | Dead Cells: %d | Step: %d",
+                    lifeGrid.countAliveCells(), lifeGrid.countCells() - lifeGrid.countAliveCells(),
+                    lifeGrid.getStep()));
+            updateChart(lifeGrid.getTotalPopulationData());
+        }
+    }
+
+    private void clearGrid(ActionEvent actionEvent) {
+        lifeGrid.clear();
+    }
+
+    private void randomizeGrid(ActionEvent actionEvent) {
+        lifeGrid.randomize();
+    }
+
+    private void step(ActionEvent actionEvent){
+        lifeGrid.iterate();
+    }
+
+~~~~ Java highlight
+    private static void createChart() {
+~~~~
+!!! BONUS: Very cool
+    This is spectacular. Very nice.
+
+~~~~ Java
+        final NumberAxis xAxis = new NumberAxis();
+        final NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Step");
+        yAxis.setLabel("Population");
+
+        lineChart = new LineChart&lt&#xFEFF;Number, Number>(xAxis, yAxis);
+        lineChart.setTitle("Total Population over Time");
+
+        XYChart.Series&lt&#xFEFF;Number, Number> total = new XYChart.Series&lt&#xFEFF;>();
+        total.setName("Total Population");
+        lineChart.getData().add(total);
+    }
+
+    private static void updateChart(List&lt&#xFEFF;Integer> totalData) {
+        XYChart.Series&lt&#xFEFF;Number, Number> total = lineChart.getData().get(0);
+        if(totalData.size() &lt&#xFEFF; total.getData().size()) {
+            total.getData().clear();
+        }
+        for(int step = total.getData().size(); step &lt&#xFEFF; totalData.size(); step++) {
+            int population = totalData.get(step);
+            total.getData().add(new XYChart.Data&lt&#xFEFF;>(step, population));
+        }
+    }
+}
+
+~~~~
+
+# LifeGrid.java
+
+~~~~ Java
+/*
+ * Course: CS1021 - 021
+ * Winter 2021
+ * Lab 5 - Game Of Life
+ * Name: Derek Riley (edits by Chris Taylor & Benjamin Singleton)
+ * Created: 11/25/2016
+ * Modified: 1/17/2022
+ */
+
+package singletonb;
+
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static singletonb.Lab5.updateStats;
+
+/**
+ * This class implements the grid of cells used to model Conway's Game of Life.
+ */
+public class LifeGrid {
+
+    /**
+     * This instance variable stores the grid of Cells
+     */
+    private List&lt&#xFEFF;List&lt&#xFEFF;Cell>> cells;
+
+    /**
+     * This instance variable stores the width of the cell grid
+     */
+    private final int numberOfCellsWide;
+
+    /**
+     * This instance variable stores the height of the cell grid
+     */
+    private final int numberOfCellsHigh;
+
+    private int step;
+    private final ArrayList&lt&#xFEFF;Integer> totalPopulationData;
+
+    /**
+     * This constructor builds a LifeGrid using the size
+     * of the Pane passed and the scale of the cells
+     * @param gamePane viewing pane
+     */
+    public LifeGrid(GridPane gamePane) {
+        this(gamePane, (int) gamePane.getPrefWidth(), (int) gamePane.getPrefHeight());
+    }
+
+    /**
+     * This constructor builds a LifeGrid using the size
+     * of the Pane passed and the scale of the cells
+     * @param gamePane viewing pane
+     * @param width the preferred width of the viewing pane
+     * @param height the preferred width of the viewing pane
+     */
+    public LifeGrid(GridPane gamePane, int width, int height) {
+        this.numberOfCellsWide = width/Cell.SCALE;
+        this.numberOfCellsHigh = height/Cell.SCALE;
+        cells = new ArrayList&lt&#xFEFF;>();
+        step = 0;
+        totalPopulationData = new ArrayList&lt&#xFEFF;>();
+
+        //initialize the two dimensional ArrayList
+        for(int i = 0; i &lt&#xFEFF; numberOfCellsHigh; i++) {
+            cells.add(new ArrayList&lt&#xFEFF;>());
+        }
+
+        //create cells
+        for(int i = 0; i &lt&#xFEFF; numberOfCellsHigh; i++) {     // yPosition
+            for(int j = 0; j &lt&#xFEFF; numberOfCellsWide; j++) { // xPosition
+                cells.get(i).add(new Cell(j, i));
+                cells.get(i).get(j).setOnMouseClicked(this::toggleCellLife);
+            }
+        }
+
+        //set neighbors for all cells
+        for(int i = 0; i &lt&#xFEFF; numberOfCellsHigh; i++) {     // yPosition
+            for(int j = 0; j &lt&#xFEFF; numberOfCellsWide; j++) { // xPosition
+                if(i > 0) {
+                    if(j > 0) {
+                        cells.get(i).get(j).setNeighborAboveLeft(cells.get(i - 1).get(j - 1));
+                    }
+                    cells.get(i).get(j).setNeighborAboveCenter(cells.get(i - 1).get(j));
+                    if(j &lt&#xFEFF; numberOfCellsWide - 1) {
+                        cells.get(i).get(j).setNeighborAboveRight(cells.get(i - 1).get(j + 1));
+                    }
+                }
+                if(j > 0) {
+                    cells.get(i).get(j).setNeighborMiddleLeft(cells.get(i).get(j - 1));
+                }
+                if(j &lt&#xFEFF; numberOfCellsWide - 1) {
+                    cells.get(i).get(j).setNeighborMiddleRight(cells.get(i).get(j + 1));
+                }
+                if(i &lt&#xFEFF; numberOfCellsHigh - 1) { // bottom boarder elements
+                    if(j > 0) {
+                        cells.get(i).get(j).setNeighborBelowLeft(cells.get(i + 1).get(j - 1));
+                    }
+                    cells.get(i).get(j).setNeighborBelowCenter(cells.get(i + 1).get(j));
+                    if(j &lt&#xFEFF; numberOfCellsWide - 1) {
+                        cells.get(i).get(j).setNeighborBelowRight(cells.get(i + 1).get(j + 1));
+                    }
+                }
+            }
+        }
+
+        initialize(gamePane);
+    }
+
+    /**
+     * This method randomizes the life and death attributes of all cells in the cells.
+     * Cells have a 50% chance of being alive or dead.
+     */
+    public void randomize() {
+        clear();
+        final double aliveChance = 0.5;
+        for(List&lt&#xFEFF;Cell> row : cells) {
+            for(Cell cell : row) {
+                cell.setAlive(Math.random() &lt&#xFEFF; aliveChance);
+                cell.updateColors();
+            }
+        }
+        updateStats();
+    }
+
+    /**
+     * This method triggers one iteration (tick) of the game of life rules for the entire grid.
+     */
+    public void iterate() {
+        for(List&lt&#xFEFF;Cell> row : cells) {
+            for(Cell cell : row) {
+                cell.determineNextTick();
+            }
+        }
+        for(List&lt&#xFEFF;Cell> row : cells) {
+            for(Cell cell : row) {
+                cell.updateTick();
+            }
+        }
+        step++;
+        totalPopulationData.add(countAliveCells());
+        updateStats();
+    }
+
+    /**
+     * This method adds all the cell rectangles to the Pane
+     */
+    private void initialize(GridPane gamePane) {
+        for(List&lt&#xFEFF;Cell> row : cells) {
+            for(Cell cell : row) {
+                gamePane.add(cell, cells.indexOf(row), row.indexOf(cell));
+            }
+        }
+        updateStats();
+    }
+
+    private void toggleCellLife(MouseEvent event) {
+        Cell cell = (Cell)event.getSource();
+        cell.setAlive(!cell.isAlive());
+        cell.updateColors();
+        updateStats();
+    }
+
+    /**
+     * Clears the grid of all cells and population data
+     */
+    public void clear() {
+        for(List&lt&#xFEFF;Cell> row : cells) {
+            for(Cell cell : row) {
+                cell.setAlive(false);
+                cell.updateColors();
+            }
+        }
+        step = 0;
+        totalPopulationData.clear();
+        updateStats();
+    }
+
+    /**
+     * Counts the number of alive cells on the grid
+     * @return the number of alive cells
+     */
+    public int countAliveCells() {
+        int aliveCells = 0;
+        for(List&lt&#xFEFF;Cell> row : cells) {
+            for(Cell cell : row) {
+                aliveCells += cell.isAlive() ? 1 : 0;
+            }
+        }
+        return aliveCells;
+    }
+
+    /**
+     * Counts the total number of cells, alive or dead
+     * @return the total number of cells
+     */
+    public int countCells() {
+        return cells.size() * cells.get(0).size();
+    }
+
+    public int getStep() {
+        return step;
+    }
+
+    public ArrayList&lt&#xFEFF;Integer> getTotalPopulationData() {
+        return totalPopulationData;
+    }
+}
+
+~~~~
+
+
+<!-- Markdeep: --><script src="https://csse.msoe.us/markdeep.js?graded"></script>

@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"singletonb","l":"BattleSim"},{"p":"singletonb","l":"Die"},{"p":"singletonb","l":"Mugwump"},{"p":"singletonb","l":"Warrior"}];updateSearchResults();
